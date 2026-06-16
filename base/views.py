@@ -12,10 +12,10 @@ from  django.http import HttpResponse,request
 
 
 def home(request):
-    return render(request, 'navbar.html')
+    return render(request, 'base/home.html')
 
 def room(request):
-    return render(request, 'room.html')
+    return render(request, 'base/room.html')
 
 
 

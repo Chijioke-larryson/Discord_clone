@@ -2,6 +2,17 @@
 
 {% block content %}
 
-<h1>Welcome to the Home Page 3222</h1>   
+<h1>Welcome to the Home Page</h1>   
+
+<!-- <div>
+    <div>
+        <h5>Rooms</h5>
+        {% for room in rooms %}
+            <div>{{ room.id }} -----
+                <a href="{% url 'room' room.id %}">{{ room.name }}</a>
+            </div>
+        {% endfor %}
+    </div>
+</div> -->
 
 {% endblock content %}

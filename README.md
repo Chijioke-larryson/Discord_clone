@@ -1,6 +1,6 @@
 # Justcord
 
-Justcord is a beginner-friendly Django project that currently serves two simple pages through a `base` application. The project is set up with Django templates, a SQLite database, and a small URL structure that can be extended into a fuller chat, room, or community-style application.
+Justcord is a beginner-friendly Django project for building a simple room-based community app. The project is set up with Django templates, a SQLite database, route handling through a `base` application, and starter models for rooms and messages.
 
 ## Project Status
 
@@ -8,10 +8,13 @@ This project is in early development. At the moment it includes:
 
 - A Django project package named `Justcord`
 - A Django app named `base`
-- A home route that renders a navbar template
-- A room route that renders a room navbar/control template
+- A home route that is prepared to read all rooms from the database
+- A room route that renders a room page template
+- A `Room` model for room names, descriptions, and timestamps
+- A `Message` model for storing messages connected to rooms
 - SQLite as the default development database
 - Project-level template discovery through the root `templates/` directory
+- App-level templates inside `base/templates/base/`
 
 ## Tech Stack
 
@@ -33,7 +36,13 @@ Justcord/
 │   └── wsgi.py
 ├── base/
 │   ├── migrations/
+│   │   ├── 0001_initial.py
 │   │   └── __init__.py
+│   ├── templates/
+│   │   └── base/
+│   │       ├── home.html
+│   │       ├── main.html
+│   │       └── room.html
 │   ├── __init__.py
 │   ├── admin.py
 │   ├── apps.py
@@ -42,8 +51,7 @@ Justcord/
 │   ├── urls.py
 │   └── views.py
 ├── templates/
-│   ├── navbar.html
-│   └── room.html
+│   └── navbar.html
 ├── db.sqlite3
 ├── manage.py
 └── README.md
@@ -65,7 +73,7 @@ The `base` app defines two routes in `base/urls.py`:
 ```python
 urlpatterns = [
     path('', views.home, name='home'),
-    path('room/', views.room, name='room'),
+    path('room/<str:pk>/', views.room, name='room'),
 ]
 ```
 
@@ -73,10 +81,11 @@ Those routes are handled by `base/views.py`:
 
 ```python
 def home(request):
-    return render(request, 'navbar.html')
+    rooms = Room.objects.all()
+    return render(request, 'base/home.html')
 
-def room(request):
-    return render(request, 'room.html')
+def room(request, pk):
+    return render(request, 'base/room.html')
 ```
 
 Because `Justcord/settings.py` includes this template directory:
@@ -89,12 +98,41 @@ Because `Justcord/settings.py` includes this template directory:
 
 Django can find templates placed inside the root `templates/` folder.
 
+The `base` app also has its own templates in `base/templates/base/`, which Django can discover through the installed app.
+
+## Models
+
+The `base` app includes starter data models for rooms and messages:
+
+```python
+class Room(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField(null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Message(models.Model):
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    body = models.TextField()
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.body[0:50]
+```
+
+`Room` stores the basic room details. `Message` connects each message to a room with a foreign key, making it the starting point for a room discussion or chat feature.
+
 ## Available Pages
 
 | URL | View | Template | Description |
 | --- | --- | --- | --- |
-| `/` | `home` | `templates/navbar.html` | Displays the main navigation bar. |
-| `/room/` | `room` | `templates/room.html` | Displays a room-style navigation bar with mock controls. |
+| `/` | `home` | `base/templates/base/home.html` | Loads room data and displays the home page. |
+| `/room/1/` | `room` | `base/templates/base/room.html` | Displays an individual room page. |
 | `/admin/` | Django admin | Django admin templates | Default Django admin route. |
 
 ## Getting Started
@@ -164,10 +202,10 @@ Then open:
 http://127.0.0.1:8000/
 ```
 
-To view the room page:
+To view a room page:
 
 ```text
-http://127.0.0.1:8000/room/
+http://127.0.0.1:8000/room/1/
 ```
 
 ## Common Commands
@@ -210,10 +248,12 @@ python manage.py test
 
 ## Templates
 
-Templates are stored in the root `templates/` directory.
+Templates are stored in two places:
 
-- `navbar.html` is rendered by the home page.
-- `room.html` is rendered by the room page.
+- `templates/navbar.html` contains the shared navbar markup.
+- `base/templates/base/main.html` can be used as the app layout.
+- `base/templates/base/home.html` is rendered by the home page.
+- `base/templates/base/room.html` is rendered by the room page.
 
 The current template files contain Bootstrap-style class names. To make Bootstrap styles and interactive navbar toggles work fully in the browser, add Bootstrap CSS and JavaScript links to a base layout later.
 
@@ -267,7 +307,8 @@ db.sqlite3
 - Add a shared `base.html` template.
 - Add Bootstrap CSS and JavaScript properly.
 - Replace placeholder links such as `href="#"` with real routes.
-- Add models for rooms, users, messages, or channels.
+- Connect the home page template to the `rooms` query data.
+- Add user, topic, and participant relationships to the room and message models.
 - Add authentication so users can join and leave rooms.
 - Add a `requirements.txt` file using:
 
@@ -282,7 +323,7 @@ pip freeze > requirements.txt
 Before pushing this project to a Git repository:
 
 - Confirm the app runs locally with `python manage.py runserver`.
-- Confirm `/` and `/room/` load correctly.
+- Confirm `/` and `/room/1/` load correctly.
 - Run `python manage.py check`.
 - Add a `.gitignore` file if one does not exist.
 - Avoid committing the `class/` virtual environment folder.

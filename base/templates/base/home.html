@@ -15,4 +15,15 @@
     </div>
 </div> -->
 
+
+<div>
+    <div>
+        <h5>Rooms</h5>
+        {% for room in rooms %}
+            <div>{{ room.id }} ----- <a href="{% url 'room' room.id %}">{{ room.name }}</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
 {% endblock content %}
